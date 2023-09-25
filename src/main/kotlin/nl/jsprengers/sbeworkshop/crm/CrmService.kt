@@ -1,9 +1,7 @@
-package nl.jsprengers.sbeworkshop
+package nl.jsprengers.sbeworkshop.crm
 
-import nl.jsprengers.api.crm.model.Company
 import nl.jsprengers.sbeworkshop.model.crm.CompanyDto
 import nl.jsprengers.sbeworkshop.model.crm.CompanyHelper
-import nl.jsprengers.sbeworkshop.model.kvk.OrganisationHelper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 

@@ -1,7 +1,5 @@
-package nl.jsprengers.sbeworkshop
+package nl.jsprengers.sbeworkshop.kvk
 
-import nl.jsprengers.api.kvk.model.Organisation
-import nl.jsprengers.sbeworkshop.model.crm.CompanyHelper
 import nl.jsprengers.sbeworkshop.model.kvk.OrganisationDto
 import nl.jsprengers.sbeworkshop.model.kvk.OrganisationHelper
 import org.springframework.beans.factory.annotation.Autowired

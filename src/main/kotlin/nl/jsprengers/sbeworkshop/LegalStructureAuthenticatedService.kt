@@ -1,5 +1,7 @@
 package nl.jsprengers.sbeworkshop
 
+import nl.jsprengers.sbeworkshop.crm.CrmService
+import nl.jsprengers.sbeworkshop.kvk.KvkService
 import nl.jsprengers.sbeworkshop.model.LegalStructure
 import nl.jsprengers.sbeworkshop.model.crm.CompanyDto
 import nl.jsprengers.sbeworkshop.model.kvk.OrganisationDto

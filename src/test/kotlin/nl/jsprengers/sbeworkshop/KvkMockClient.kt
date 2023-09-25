@@ -1,15 +1,18 @@
 package nl.jsprengers.sbeworkshop
 
 import nl.jsprengers.api.kvk.model.Organisation
+import nl.jsprengers.sbeworkshop.kvk.KvkClient
 import nl.jsprengers.sbeworkshop.model.kvk.OrganisationHelper
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.kotlin.whenever
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 
 @Service
-class KvkMockBackend(private val mock: KvkClient) {
+@Profile("test")
+class KvkMockClient : KvkClient {
 
     private val cache = mutableMapOf<String, Organisation>()
 
@@ -22,15 +25,9 @@ class KvkMockBackend(private val mock: KvkClient) {
     }
 
     fun init() {
-        Mockito.reset<Any>(mock)
         cache.clear()
-        Mockito.doAnswer { answer: InvocationOnMock ->
-            val kvk: String = answer.getArgument(0)
-            cache[kvk]
-        }
-            .whenever(mock)
-            .findOrganisation(ArgumentMatchers.anyString())
-
     }
+
+    override fun findOrganisation(parentKvk: String): Organisation? = cache[parentKvk]
 
 }

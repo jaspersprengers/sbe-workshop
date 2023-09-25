@@ -1,15 +1,18 @@
 package nl.jsprengers.sbeworkshop
 
 import nl.jsprengers.api.crm.model.Company
+import nl.jsprengers.sbeworkshop.crm.CrmClient
 import nl.jsprengers.sbeworkshop.model.crm.CompanyHelper
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.kotlin.whenever
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 
 @Service
-class CrmMockBackend(private val mock: CrmClient) {
+@Profile("test")
+class CrmMockClient : CrmClient {
 
     private val cache = mutableMapOf<String, Company>()
 
@@ -22,24 +25,17 @@ class CrmMockBackend(private val mock: CrmClient) {
     }
 
     fun init() {
-        Mockito.reset<Any>(mock)
         cache.clear()
-        Mockito.doAnswer { answer: InvocationOnMock ->
-            val kvk: String = answer.getArgument(0)
-            cache[kvk]
-        }
-            .whenever(mock)
-            .findCompanyByKvk(ArgumentMatchers.anyString())
+    }
 
-        Mockito.doAnswer { answer: InvocationOnMock ->
-            val kvk: String = answer.getArgument(0)
-            val name: String = answer.getArgument(1)
-            val id = "000$kvk"
-            cache[kvk] = Company(id, kvk, name)
-            id
-        }
-            .whenever(mock)
-            .createCompany(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
+    override fun findCompanyByKvk(parentKvk: String): Company? {
+        return cache[parentKvk]
+    }
+
+    override fun createCompany(kvk: String, name: String): String {
+        val id = "000$kvk"
+        cache[kvk] = Company(id, kvk, name)
+        return id
     }
 
 }

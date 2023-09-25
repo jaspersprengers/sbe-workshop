@@ -8,24 +8,23 @@ import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
 import nl.jsprengers.api.crm.model.Company
 import nl.jsprengers.api.kvk.model.Organisation
-import nl.jsprengers.sbeworkshop.CrmMockBackend
-import nl.jsprengers.sbeworkshop.KvkMockBackend
-import nl.jsprengers.sbeworkshop.MockConfiguration
-import nl.jsprengers.sbeworkshop.model.Relation
+import nl.jsprengers.sbeworkshop.CrmMockClient
+import nl.jsprengers.sbeworkshop.KvkMockClient
 import nl.jsprengers.sbeworkshop.model.LegalStructure
+import nl.jsprengers.sbeworkshop.model.Relation
 import nl.jsprengers.sbeworkshop.model.RestError
 import org.assertj.core.api.Assertions.assertThat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.web.ServerProperties
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
+import org.springframework.test.context.ActiveProfiles
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@Import(MockConfiguration::class)
+@ActiveProfiles("test")
 class LegalStructureSteps {
 
     data class IdAndName(val id: String, val name: String)
@@ -36,10 +35,10 @@ class LegalStructureSteps {
     private val template: TestRestTemplate = TestRestTemplate()
 
     @Autowired
-    lateinit var kvkMockBackend: KvkMockBackend
+    lateinit var kvkMockBackend: KvkMockClient
 
     @Autowired
-    lateinit var crmMockBackend: CrmMockBackend
+    lateinit var crmMockBackend: CrmMockClient
 
     private var userType: String = "user"
     private var kvk = "EMPTY"
