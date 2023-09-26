@@ -12,7 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 class RestResponseExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(value = [(Exception::class)])
-    fun handleAccessDeniedException(ex: Exception, request: WebRequest): ResponseEntity<RestError> {
+    fun handleGenericException(ex: Exception, request: WebRequest): ResponseEntity<RestError> {
         return ResponseEntity.badRequest().body(RestError(ex.message ?: "unknown error"))
     }
 }

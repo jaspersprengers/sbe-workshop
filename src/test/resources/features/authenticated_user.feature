@@ -1,11 +1,11 @@
 Feature: Legal structure retrieval by kvk number for authenticated users
 
-  This feature covers the scenarios for authenticated users, i.e. existing Rabo customer.
+  This feature covers the scenarios for authenticated users, i.e. an existing Rabo customer.
 
-  A kvk (Kamer van Koophandel) number for an organisation is presented to the system.
-  This is looked up against the kvk portal and in the CRM, where it should exist.
+  The system receives a request containing a kvk (Kamer van Koophandel) number.
+  This is looked up in the kvk portal and in the CRM, where it should exist.
 
-  If the organisation returned from the kvk portal contains subsidiaries, these should also be matched.
+  If the organisation that is returned from the kvk portal contains subsidiaries, these should also be matched in CRM.
 
   This feature is a validation step to ensure that the kvk portal does not supply data unknown in CRM.
 

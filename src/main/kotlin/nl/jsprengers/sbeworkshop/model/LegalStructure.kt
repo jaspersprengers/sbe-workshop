@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class LegalStructure(val companies: List<Relation>? = emptyList())
 
 data class Relation(
-    @JsonProperty("id")
+    @JsonProperty("relation_id")
     val relationId: String,
     @JsonProperty("name")
     val name: String,

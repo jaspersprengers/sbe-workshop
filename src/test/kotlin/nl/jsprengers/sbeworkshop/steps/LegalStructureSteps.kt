@@ -40,7 +40,7 @@ class LegalStructureSteps {
     @Autowired
     lateinit var crmMockBackend: CrmMockClient
 
-    private var userType: String = "user"
+    private var isAuthenticated: Boolean = false
     private var kvk = "EMPTY"
 
     @Before
@@ -112,16 +112,16 @@ class LegalStructureSteps {
     }
 
     private fun createRequest(kvk: String): RequestEntity<String> {
-        val url = "http://localhost:${env.port}/legalstructure"
+        val path = if (this.isAuthenticated) "authenticated" else "anonymous"
+        val url = "http://localhost:${env.port}/legalstructure$path"
         return RequestEntity
             .post(url)
-            .headers { it.add("user_type", this.userType) }
             .accept(MediaType.APPLICATION_JSON)
             .body(kvk)
     }
 
     @When("^an (.*?) user enter the system$")
     fun aUserEnterTheSystem(type: String) {
-        this.userType = if (type == "anonymous") "guest" else "user"
+        this.isAuthenticated = type == "authenticated"
     }
 }

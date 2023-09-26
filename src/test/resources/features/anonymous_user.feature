@@ -2,10 +2,10 @@ Feature: Legal structure retrieval by kvk number for anonymous users
 
   This feature covers the scenarios for an anonymous user, i.e., who is not authenticated and may or may not be an existing Rabo customer.
 
-  A kvk (Kamer van Koophandel) number for an organisation is presented to the system.
-  This is looked up against the KvK portal (where it should exist) and checked in CRM (where is should NOT exist).
-  A new company record is then created for the parent organisation and all its subsidiaries.
-  The corresponding legal structure is then returned, based on the data from the kvk portal and enriched with a relation ID for each member company.
+  The system receives a request containing a kvk (Kamer van Koophandel) number.
+  This is looked up in the KvK portal (where it should exist) and checked in CRM (where is should NOT exist).
+  A new company record is then created in CRM for the parent organisation and all its subsidiaries.
+  The corresponding legal structure is returned, based on the data from the kvk portal and enriched with a relation ID for the parent company and any daughters.
 
   Background:
     When an anonymous user enter the system
