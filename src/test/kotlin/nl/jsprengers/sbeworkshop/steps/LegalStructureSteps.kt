@@ -113,7 +113,7 @@ class LegalStructureSteps {
 
     private fun createRequest(kvk: String): RequestEntity<String> {
         val path = if (this.isAuthenticated) "authenticated" else "anonymous"
-        val url = "http://localhost:${env.port}/legalstructure$path"
+        val url = "http://localhost:${env.port}/legalstructure/$path"
         return RequestEntity
             .post(url)
             .accept(MediaType.APPLICATION_JSON)
