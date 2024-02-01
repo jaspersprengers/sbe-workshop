@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
+import org.springframework.http.ResponseEntity
 import org.springframework.test.context.ActiveProfiles
 
 @CucumberContextConfiguration
@@ -35,93 +36,26 @@ class LegalStructureSteps {
     private val template: TestRestTemplate = TestRestTemplate()
 
     @Autowired
-    lateinit var kvkMockBackend: KvkMockClient
+    lateinit var kvkMockClient: KvkMockClient
 
     @Autowired
-    lateinit var crmMockBackend: CrmMockClient
-
-    private var isAuthenticated: Boolean = false
-    private var kvk = "EMPTY"
+    lateinit var crmMockClient: CrmMockClient
 
     @Before
     fun setup() {
-        crmMockBackend.init()
-        kvkMockBackend.init()
+        crmMockClient.init()
+        kvkMockClient.init()
     }
 
 
-    @When("^a request for kvk (.*?) is made$")
-    fun kvkIsPresented(kvk: Int) {
-        this.kvk = kvk.toString()
-    }
-
-    @And("^kvk has organisation (.*?) \\(kvk (.*?)\\) with no subsidiaries$")
-    fun kvkHasOrg(name: String, kvk: String) {
-        kvkMockBackend.register(Organisation(kvk, name))
-    }
-
-    @Given("^kvk has organisation (.*?) \\(kvk (.*?)\\) with subsidiaries (.*?)$")
-    fun kvkHasOrganisationFrietVanPietKvkWithSubsidiaryKnaksKvk(name: String, kvk: String, subsidiaries: String) {
-        val childOrganisations = parseDaughters(subsidiaries).map { Organisation(it.id, it.name) }
-        kvkMockBackend.register(Organisation(kvk, name), childOrganisations)
-    }
-
-    fun parseDaughters(raw: String): List<IdAndName> {
-        val pattern = Regex("^(.*) \\(\\w{2,3} (\\d+)\\)$")
-        return raw.split("and")
-            .map { it.trim() }
-            .map { pattern.matchEntire(it)!!.groupValues }
-            .map { IdAndName(id = it[2], name = it[1]) }
-    }
-
-    @And("^crm has company (.*?) \\(kvk (.*?)\\) with no daughters$")
-    fun crmHasCompany(name: String, kvk: String) {
-        crmMockBackend.register(Company("000$kvk", kvk, name))
-    }
-
-    @And("^crm has company (.*?) \\(kvk (.*?)\\) with daughters (.*?)$")
-    fun crmHasCompanyKvkWithChildKvk(name: String, kvk: String, daughters: String) {
-        val childOrganisations = parseDaughters(daughters).map { Company("000${it.id}", it.id, it.name) }
-        crmMockBackend.register(Company("000$kvk", kvk, name), childOrganisations)
-    }
-
-    @Then("^the response contains company (.*?) \\(id (.*?)\\) with daughters (.*?)$")
-    fun theLegalStructureContainsCompanyFrietVanPietIdWithDaughters(name: String, id: String, daughters: String) {
-        val parent = Relation(relationId = id, name = name)
-        val childOrganisations = parseDaughters(daughters)
-            .map { Relation(relationId = it.id, name = it.name, parentRelationId = parent.relationId) }
-        assertCorrectReply(LegalStructure(listOf(parent) + childOrganisations))
-    }
-
-    @Then("^the response contains company (.*?) \\(id (.*?)\\) with no daughters$")
-    fun theLegalStructureContainsCompany(name: String, id: String) {
-        assertCorrectReply(LegalStructure(listOf(Relation(relationId = id, name = name))))
-    }
-
-    private fun assertCorrectReply(legalStructureExpected: LegalStructure) {
-        val reply = template.exchange(createRequest(this.kvk), LegalStructure::class.java)
-        assertThat(reply.statusCode.is2xxSuccessful).describedAs("status code").isTrue()
-        assertThat(reply.body).isEqualTo(legalStructureExpected)
-    }
-
-    @Then("^the request is rejected with reason (.*?)$")
-    fun theRequestIsRejectedWithReason(reason: String) {
-        val reply = template.exchange(createRequest(this.kvk), RestError::class.java)
-        assertThat(reply.statusCode.is2xxSuccessful).describedAs("status code").isFalse()
-        assertThat(reply.body?.code).isEqualTo(reason)
-    }
-
-    private fun createRequest(kvk: String): RequestEntity<String> {
-        val path = if (this.isAuthenticated) "authenticated" else "anonymous"
+    private fun createRequest(kvk: String, isAuthenticated: Boolean): ResponseEntity<LegalStructure>? {
+        val path = if (isAuthenticated) "authenticated" else "anonymous"
         val url = "http://localhost:${env.port}/legalstructure/$path"
-        return RequestEntity
+        val request = RequestEntity
             .post(url)
             .accept(MediaType.APPLICATION_JSON)
             .body(kvk)
+        return template.exchange(request, LegalStructure::class.java)
     }
 
-    @When("^an (.*?) user enter the system$")
-    fun aUserEnterTheSystem(type: String) {
-        this.isAuthenticated = type == "authenticated"
-    }
 }
