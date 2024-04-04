@@ -6,12 +6,11 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
-import nl.jsprengers.api.crm.model.Company
-import nl.jsprengers.api.kvk.model.Organisation
+import nl.jsprengers.api.companyportal.model.Company
+import nl.jsprengers.api.crm.model.Relation
+import nl.jsprengers.sbeworkshop.CompanyPortalMockClient
 import nl.jsprengers.sbeworkshop.CrmMockClient
-import nl.jsprengers.sbeworkshop.KvkMockClient
-import nl.jsprengers.sbeworkshop.model.LegalStructure
-import nl.jsprengers.sbeworkshop.model.Relation
+import nl.jsprengers.sbeworkshop.model.RelationDetails
 import nl.jsprengers.sbeworkshop.model.RestError
 import org.assertj.core.api.Assertions.assertThat
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +20,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.test.context.ActiveProfiles
+import java.time.LocalDate
 
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -35,93 +35,75 @@ class LegalStructureSteps {
     private val template: TestRestTemplate = TestRestTemplate()
 
     @Autowired
-    lateinit var kvkMockBackend: KvkMockClient
+    lateinit var portalMockBackend: CompanyPortalMockClient
 
     @Autowired
     lateinit var crmMockBackend: CrmMockClient
 
     private var isAuthenticated: Boolean = false
-    private var kvk = "EMPTY"
+    private var cin: String? = null
 
     @Before
     fun setup() {
         crmMockBackend.init()
-        kvkMockBackend.init()
+        portalMockBackend.init()
     }
 
 
-    @When("^a request for kvk (.*?) is made$")
-    fun kvkIsPresented(kvk: Int) {
-        this.kvk = kvk.toString()
+    @When("^an? (.*?) user applies with CIN (.*?)\$")
+    fun userEnterSystem(userType: String, cin: Int) {
+        this.isAuthenticated = userType == "authenticated"
+        this.cin = cin.toString()
     }
 
-    @And("^kvk has organisation (.*?) \\(kvk (.*?)\\) with no subsidiaries$")
-    fun kvkHasOrg(name: String, kvk: String) {
-        kvkMockBackend.register(Organisation(kvk, name))
+
+    @Given("^CP has an organisation \"(.*?)\" with CIN (.*?) and foundation date (.*?)$")
+    fun portalHasOrg(name: String, cin: String, foundationDate: String) {
+        portalMockBackend.register(Company(cin, name).foundationDate(LocalDate.parse(foundationDate)))
     }
 
-    @Given("^kvk has organisation (.*?) \\(kvk (.*?)\\) with subsidiaries (.*?)$")
-    fun kvkHasOrganisationFrietVanPietKvkWithSubsidiaryKnaksKvk(name: String, kvk: String, subsidiaries: String) {
-        val childOrganisations = parseDaughters(subsidiaries).map { Organisation(it.id, it.name) }
-        kvkMockBackend.register(Organisation(kvk, name), childOrganisations)
+    @And("^CRM has a company \"(.*?)\" with relation id (.*?), CIN (.*?) and status (.*?)$")
+    fun crmHasCompanies(name: String, relationId: String, cin: String, status: String) {
+        crmMockBackend.register(Relation(relationId, cin, name).relationId(relationId).status(Relation.StatusEnum.fromValue(status)))
     }
 
-    fun parseDaughters(raw: String): List<IdAndName> {
-        val pattern = Regex("^(.*) \\(\\w{2,3} (\\d+)\\)$")
-        return raw.split("and")
-            .map { it.trim() }
-            .map { pattern.matchEntire(it)!!.groupValues }
-            .map { IdAndName(id = it[2], name = it[1]) }
+    @Then("^the response is a relation with id (.*?), name (.*?), CIN (.*?), foundation year (.*?) and status (.*?)$")
+    fun theResponseIs(id: String, name: String, cin: String, foundationYear: Int, status: String) {
+        val relationExpected =
+            RelationDetails(relationId = id, name = name, cin = cin, foundationYear = foundationYear, status = Relation.StatusEnum.fromValue(status))
+        assertThat(postRequest()).isEqualTo(relationExpected)
     }
 
-    @And("^crm has company (.*?) \\(kvk (.*?)\\) with no daughters$")
-    fun crmHasCompany(name: String, kvk: String) {
-        crmMockBackend.register(Company("000$kvk", kvk, name))
+    @Then("^the response is a relation with a valid id, name (.*?), CIN (.*?) and foundation year (.*?)$")
+    fun theResponseIs(name: String, cin: String, foundationYear: Int) {
+        val reply = postRequest()
+        assertThat(reply.relationId).isNotBlank()
+        assertThat(reply.cin).isEqualTo(cin)
+        assertThat(reply.name).isEqualTo(name)
+        assertThat(reply.foundationYear).isEqualTo(foundationYear)
+        assertThat(reply.status).isNull()
     }
 
-    @And("^crm has company (.*?) \\(kvk (.*?)\\) with daughters (.*?)$")
-    fun crmHasCompanyKvkWithChildKvk(name: String, kvk: String, daughters: String) {
-        val childOrganisations = parseDaughters(daughters).map { Company("000${it.id}", it.id, it.name) }
-        crmMockBackend.register(Company("000$kvk", kvk, name), childOrganisations)
-    }
-
-    @Then("^the response contains company (.*?) \\(id (.*?)\\) with daughters (.*?)$")
-    fun theLegalStructureContainsCompanyFrietVanPietIdWithDaughters(name: String, id: String, daughters: String) {
-        val parent = Relation(relationId = id, name = name)
-        val childOrganisations = parseDaughters(daughters)
-            .map { Relation(relationId = it.id, name = it.name, parentRelationId = parent.relationId) }
-        assertCorrectReply(LegalStructure(listOf(parent) + childOrganisations))
-    }
-
-    @Then("^the response contains company (.*?) \\(id (.*?)\\) with no daughters$")
-    fun theLegalStructureContainsCompany(name: String, id: String) {
-        assertCorrectReply(LegalStructure(listOf(Relation(relationId = id, name = name))))
-    }
-
-    private fun assertCorrectReply(legalStructureExpected: LegalStructure) {
-        val reply = template.exchange(createRequest(this.kvk), LegalStructure::class.java)
+    private fun postRequest(): RelationDetails {
+        val reply = template.exchange(createRequest(this.cin ?: throw IllegalStateException("CIN not set")), RelationDetails::class.java)
         assertThat(reply.statusCode.is2xxSuccessful).describedAs("status code").isTrue()
-        assertThat(reply.body).isEqualTo(legalStructureExpected)
+        return reply.body!!
     }
 
     @Then("^the request is rejected with reason (.*?)$")
     fun theRequestIsRejectedWithReason(reason: String) {
-        val reply = template.exchange(createRequest(this.kvk), RestError::class.java)
+        val reply = template.exchange(createRequest(this.cin ?: throw IllegalStateException("CIN not set")), RestError::class.java)
         assertThat(reply.statusCode.is2xxSuccessful).describedAs("status code").isFalse()
         assertThat(reply.body?.code).isEqualTo(reason)
     }
 
-    private fun createRequest(kvk: String): RequestEntity<String> {
+    private fun createRequest(cin: String): RequestEntity<String> {
         val path = if (this.isAuthenticated) "authenticated" else "anonymous"
-        val url = "http://localhost:${env.port}/legalstructure/$path"
+        val url = "http://localhost:${env.port}/relationdetails/$path"
         return RequestEntity
             .post(url)
             .accept(MediaType.APPLICATION_JSON)
-            .body(kvk)
+            .body(cin)
     }
 
-    @When("^an (.*?) user enter the system$")
-    fun aUserEnterTheSystem(type: String) {
-        this.isAuthenticated = type == "authenticated"
-    }
 }

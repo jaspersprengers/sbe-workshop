@@ -222,11 +222,11 @@
                         </goals>
                         <configuration>
                             <inputSpec>
-                                ${project.basedir}/src/main/resources/openapi/kvk.yaml
+                                ${project.basedir}/src/main/resources/openapi/companyportal.yaml
                             </inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>nl.jsprengers.api.kvk</apiPackage>
-                            <modelPackage>nl.jsprengers.api.kvk.model</modelPackage>
+                            <apiPackage>nl.jsprengers.api.companyportal</apiPackage>
+                            <modelPackage>nl.jsprengers.api.companyportal.model</modelPackage>
                             <supportingFilesToGenerate>
                                 ApiUtil.java
                             </supportingFilesToGenerate>

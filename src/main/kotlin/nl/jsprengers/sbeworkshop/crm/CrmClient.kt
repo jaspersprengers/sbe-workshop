@@ -1,11 +1,12 @@
 package nl.jsprengers.sbeworkshop.crm
 
-import nl.jsprengers.api.crm.CompanyApi
-import nl.jsprengers.api.crm.model.Company
+import nl.jsprengers.api.crm.RelationApi
+import nl.jsprengers.api.crm.model.Relation
+import nl.jsprengers.api.crm.model.Relation.StatusEnum
 
 
-interface CrmClient : CompanyApi {
-    fun findCompanyByKvk(parentKvk: String): Company?
+interface CrmClient : RelationApi {
+    fun findCompanyByCIN(cin: String): Relation?
 
-    fun createCompany(kvk: String, name: String): String
+    fun createCompany(relationId: String, cin: String, name: String, status: StatusEnum?): String
 }

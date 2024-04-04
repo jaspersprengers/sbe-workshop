@@ -1,20 +1,20 @@
 package nl.jsprengers.sbeworkshop.crm
 
-import nl.jsprengers.sbeworkshop.model.crm.CompanyDto
-import nl.jsprengers.sbeworkshop.model.crm.CompanyHelper
+import nl.jsprengers.api.crm.model.Relation
+import nl.jsprengers.api.crm.model.Relation.StatusEnum
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class CrmService(@Autowired val crmClient: CrmClient) {
 
-    fun findCompany(kvk: String): CompanyDto? {
-        return crmClient.findCompanyByKvk(kvk)?.let { CompanyHelper.map(it) }
+    fun findCompany(cin: String): Relation? {
+        return crmClient.findCompanyByCIN(cin)
     }
 
-    fun createCompany(kvk: String, name: String, parentId: String?): CompanyDto {
-        val id = crmClient.createCompany(kvk, name)
-        return CompanyDto(id, kvk, name)
+    fun createRelation(relationId: String, cin: String, name: String, status: StatusEnum?): Relation {
+        val id = crmClient.createCompany(relationId, cin, name, status)
+        return Relation(id, cin, name)
     }
 
 }
