@@ -21,8 +21,8 @@ object RelationFactory {
             relationId = relation.relationId,
             cin = relation.cin,
             name = relation.name,
-            foundationYear = company.foundationDate?.year,
-            status = relation.status
+            status = relation.status,
+            foundationYear = company.foundationDate.year
         )
     }
 

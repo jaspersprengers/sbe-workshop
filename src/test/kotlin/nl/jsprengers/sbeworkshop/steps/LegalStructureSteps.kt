@@ -8,6 +8,7 @@ import io.cucumber.java.en.When
 import io.cucumber.spring.CucumberContextConfiguration
 import nl.jsprengers.api.companyportal.model.Company
 import nl.jsprengers.api.crm.model.Relation
+import nl.jsprengers.api.crm.model.Relation.StatusEnum
 import nl.jsprengers.sbeworkshop.CompanyPortalMockClient
 import nl.jsprengers.sbeworkshop.CrmMockClient
 import nl.jsprengers.sbeworkshop.model.RelationDetails
@@ -26,8 +27,6 @@ import java.time.LocalDate
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ActiveProfiles("test")
 class LegalStructureSteps {
-
-    data class IdAndName(val id: String, val name: String)
 
     @Autowired
     lateinit var env: ServerProperties
@@ -57,31 +56,30 @@ class LegalStructureSteps {
     }
 
 
-    @Given("^CP has an organisation \"(.*?)\" with CIN (.*?) and foundation date (.*?)$")
-    fun portalHasOrg(name: String, cin: String, foundationDate: String) {
-        portalMockBackend.register(Company(cin, name).foundationDate(LocalDate.parse(foundationDate)))
+    @Given("^CP has an organisation \"(.*?)\" with CIN (.*?)$")
+    fun portalHasOrg(name: String, cin: String) {
+        portalMockBackend.register(Company(cin, name).foundationDate(LocalDate.of(1980, 1, 1)))
     }
 
-    @And("^CRM has a company \"(.*?)\" with relation id (.*?), CIN (.*?) and status (.*?)$")
-    fun crmHasCompanies(name: String, relationId: String, cin: String, status: String) {
-        crmMockBackend.register(Relation(relationId, cin, name).relationId(relationId).status(Relation.StatusEnum.fromValue(status)))
+    @And("^CRM has a company \"(.*?)\" with relation id (.*?) and CIN (.*?)$")
+    fun crmHasCompanies(name: String, relationId: String, cin: String) {
+        crmMockBackend.register(Relation(relationId, cin, name).relationId(relationId).status(Relation.StatusEnum.CUSTOMER))
     }
 
-    @Then("^the response is a relation with id (.*?), name (.*?), CIN (.*?), foundation year (.*?) and status (.*?)$")
-    fun theResponseIs(id: String, name: String, cin: String, foundationYear: Int, status: String) {
+    @Then("^the response is a relation with id (.*?), name (.*?) and CIN (.*?)$")
+    fun theResponseIs(id: String, name: String, cin: String) {
         val relationExpected =
-            RelationDetails(relationId = id, name = name, cin = cin, foundationYear = foundationYear, status = Relation.StatusEnum.fromValue(status))
+            RelationDetails(relationId = id, name = name, cin = cin, foundationYear = 1980, status = StatusEnum.CUSTOMER)
         assertThat(postRequest()).isEqualTo(relationExpected)
     }
 
-    @Then("^the response is a relation with a valid id, name (.*?), CIN (.*?) and foundation year (.*?)$")
-    fun theResponseIs(name: String, cin: String, foundationYear: Int) {
+    @Then("^the response is a relation with a valid id, name (.*?) and CIN (.*?)$")
+    fun theResponseIs(name: String, cin: String) {
         val reply = postRequest()
         assertThat(reply.relationId).isNotBlank()
         assertThat(reply.cin).isEqualTo(cin)
         assertThat(reply.name).isEqualTo(name)
-        assertThat(reply.foundationYear).isEqualTo(foundationYear)
-        assertThat(reply.status).isNull()
+        assertThat(reply.foundationYear).isEqualTo(1980)
     }
 
     private fun postRequest(): RelationDetails {

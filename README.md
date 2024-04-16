@@ -1,24 +1,53 @@
-# sbe-workshop
-Workshop for Specification by Example, given at Rabobank 27-9-2023
+# From Brainwave to Feature
 
-## Your mission, should you choose to accept
-“For each user that starts the journey, we want to know the corporate structure for a given kvk, i.e., all the constituent relations with their relation IDs. Authenticated users should be handled a little differently from anonymous users. If you're logged in, we should have your company details on record, so all the organisations and subsidiaries we get back from the Chamber of Commerce API should be present in CRM. If it's not, raise an error. There may be more companies listed in Siebel, and these need to be added to the legal structure that is returned. Company details we find in Siebel are leading (such as the exact name), but if the kvk portal returns related companies with different registration numbers, raise an error. If you're unauthenticated, you might be an existing customer who didn't log in. In that case (i.e., if we can find a record in Siebel for your kvk), raise an error. You should log in properly. Otherwise, create a new record in Siebel for the parent company and all its daughters and return those Siebel Ids in the corporate structure”
+* The implementation is a rapid prototype, but the features and the test code are already robust, and we're using the models of the published APIs.
+* We define an acceptable mismatch as having a Levenshtein distance of 3 or less. This algorithm can be swapped for something more sophisticated later.
+* Setup of mock data (E.g. CrmMockClient) and verification of results is deliberately minimal. You only include the values that are essential to the flow. Perhaps the company portal requires the name of a director, but that value is not referenced in any business rule. You use a hardcoded default value in the backing code, but don't mention it in the feature file.
+* Every test starts with a clean slate. Only the data that you explicitly store in CP or CRM can be looked up.
 
-## Highlight all the technical terms
+## Let's have a good laugh
 
-## make it consistent
-Get rid of synonyms and choose the non-technical term where possible
+Imagine the following specification:
+```text
+"For each user that starts the journey, we want to align the company details for a given CIN.
+Authenticated users should be handled a little differently from anonymous users. 
+If you’re authenticated, we should have your company details on record, so whatever we get back from the CP should already be present in CRM.
+If it's not, raise an error. If there is an acceptable mismatch between CRM and the CP, the portal is leading, but large differences should raise an error.
+If you're anonymous, just create a record in CRM and return the new relation Id."
+```
 
-## Make it more readable
-* Condense verbose phrases.
-* Remove imprecise or subjective phrases
-* Use spacing to separate requirements
+Can you write Gherkin features and scenarios for all the possible cases?
 
-## What are the inputs and outputs?
+```gherkin 
+Feature: Align Company Details
+As a user
+I want to align the company details for a given CIN
+So that the company details are consistent across systems
 
-## Feature decomposition
-* Distinguish between features and scenarios.
-  Features relate to a distinct piece of functionality while scenarios to different tweaks in the ingredients that yield the same successful result, or an unsuccessful one.
-* Focus on business relevance, not the non-functional requirements
-* Focus on the API. Don't peek inside the box.
+Scenario: Authenticated User with Matching Company Details
+Given an authenticated user starts the journey
+And the company details in CRM match with the CP
+When the user aligns the company details for a given CIN
+Then no error should be raised
+And the company details should remain the same
 
+Scenario: Authenticated User with Acceptable Mismatch in Company Details
+Given an authenticated user starts the journey
+And there is an acceptable mismatch between the company details in CRM and the CP
+When the user aligns the company details for a given CIN
+Then no error should be raised
+And the company details should be updated to match the CP
+
+Scenario: Authenticated User with Large Mismatch in Company Details
+Given an authenticated user starts the journey
+And there is a large mismatch between the company details in CRM and the CP
+When the user aligns the company details for a given CIN
+Then an error should be raised
+And the company details should not be updated
+
+Scenario: Anonymous User Aligning Company Details
+Given an anonymous user starts the journey
+When the user aligns the company details for a given CIN
+Then a new record should be created in CRM
+And the new relation Id should be returned
+```
