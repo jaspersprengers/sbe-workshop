@@ -41,9 +41,10 @@ Create record for anonymous users:
 ## About this prototype project
 
 * The implementation is a rapid prototype written in Kotlin, but the features and the test code are already robust, and we're using the models of the published APIs.
-* We define an acceptable mismatch as having a Levenshtein distance of 3 or less. This algorithm can be swapped for something more sophisticated later.
-* Setup of mock data (E.g. CrmMockClient) and verification of results is deliberately minimal. You only include the values that are essential to the flow. Perhaps the company portal requires the name of a director, but that value is not referenced in any business rule. You use a hardcoded default value in the backing code, but don't mention it in the feature file.
-* Every test starts with a clean slate. Only the data that you explicitly store in CP or CRM can be looked up.
+* What counts as an acceptable mismatch can get complicated. For the time being we'll define it as having a Levenshtein distance of 3 or less. This algorithm can be swapped for something more sophisticated later.
+* Setup of mock data (E.g. CrmMockClient) and verification of results is deliberately minimal. You only include the values that are essential to the flow. Perhaps the company portal requires the name of a director, but that value is not referenced in any business rule. You use a hardcoded default value in the backing code, but don't mention it in the feature file. 
+* In general: the features try to cover all possible execution branches, but without specifying or validating every detail or flavour. For that purpose we have openapi and wsdl files. 
+* Every test starts with a clean slate. Only the data that you explicitly store in CP or CRM will yield a positive response. 
 
 ## Let's have a good laugh with github copilot
 
